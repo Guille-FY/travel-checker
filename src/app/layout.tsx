@@ -10,17 +10,6 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
     title: "Travel Tracker",
   },
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-    viewportFit: "cover",
-  },
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#4f46e5" },
-    { media: "(prefers-color-scheme: dark)", color: "#6366f1" },
-  ],
 };
 
 export default function RootLayout({
@@ -31,6 +20,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning={true}>
       <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes, viewport-fit=cover" />
+        <meta name="theme-color" content="#4f46e5" media="(prefers-color-scheme: light)" />
+        <meta name="theme-color" content="#6366f1" media="(prefers-color-scheme: dark)" />
         <link rel="manifest" href="/manifest.json" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />

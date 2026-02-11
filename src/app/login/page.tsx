@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabaseClient';
+import { useRouter } from 'next/navigation';
 
 // Icons
 const GlobeIcon = () => (
@@ -25,16 +26,91 @@ const CheckIcon = () => (
     </svg>
 );
 
+const MoonIcon = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+    </svg>
+);
+
+const SunIcon = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="5"></circle>
+        <line x1="12" y1="1" x2="12" y2="3"></line>
+        <line x1="12" y1="21" x2="12" y2="23"></line>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+        <line x1="1" y1="12" x2="3" y2="12"></line>
+        <line x1="21" y1="12" x2="23" y2="12"></line>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+);
+
 export default function LoginPage() {
     const [loading, setLoading] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isSignUp, setIsSignUp] = useState(false);
     const [message, setMessage] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
+    const [darkMode, setDarkMode] = useState(false);
+    const router = useRouter();
+
+    useEffect(() => {
+        // Initial Theme Check
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+        setDarkMode(prefersDark.matches);
+        if (prefersDark.matches) {
+            document.body.classList.add('dark');
+        } else {
+            document.body.classList.remove('dark');
+        }
+
+        const handleThemeChange = (e: MediaQueryListEvent) => {
+            setDarkMode(e.matches);
+            document.body.classList.toggle('dark', e.matches);
+        };
+        prefersDark.addEventListener('change', handleThemeChange);
+
+        // Check if user is already logged in
+        const checkSession = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                router.push('/');
+            }
+        };
+        checkSession();
+
+        return () => {
+            prefersDark.removeEventListener('change', handleThemeChange);
+        };
+    }, [router]);
+
+    const toggleDarkMode = () => {
+        const newDarkMode = !darkMode;
+        setDarkMode(newDarkMode);
+        document.body.classList.toggle('dark', newDarkMode);
+    };
+
+    const validateEmail = (email: string) => {
+        return String(email)
+            .toLowerCase()
+            .match(
+                /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+            );
+    };
 
     const handleAuth = async (e: any) => {
         e.preventDefault();
         setLoading(true);
+        setError(null);
+
+        if (!validateEmail(email)) {
+            setError('Please enter a valid email address');
+            setLoading(false);
+            return;
+        }
+
         try {
             if (isSignUp) {
                 const { error } = await supabase.auth.signUp({
@@ -49,10 +125,11 @@ export default function LoginPage() {
             } else {
                 const { error } = await supabase.auth.signInWithPassword({ email, password });
                 if (error) throw error;
+                router.push('/'); // Redirect to home on success
             }
         } catch (error: any) {
             console.error(error);
-            alert(error.error_description || error.message);
+            setError(error.error_description || error.message);
             setLoading(false);
         }
     };
@@ -65,8 +142,33 @@ export default function LoginPage() {
             alignItems: 'center',
             justifyContent: 'center',
             background: 'var(--bg-primary)',
-            padding: '20px'
+            padding: '20px',
+            position: 'relative' // For absolute positioning of toggle
         }}>
+            {/* Theme Toggle */}
+            <button
+                onClick={toggleDarkMode}
+                aria-label="Toggle dark mode"
+                style={{
+                    position: 'absolute',
+                    top: '20px',
+                    right: '20px',
+                    padding: '10px',
+                    borderRadius: '50%',
+                    background: 'var(--bg-secondary)',
+                    border: '1px solid var(--border-color)',
+                    color: 'var(--text-primary)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: 'var(--shadow-sm)',
+                    transition: 'all 0.2s ease'
+                }}
+            >
+                {darkMode ? <SunIcon /> : <MoonIcon />}
+            </button>
+
             <div style={{
                 background: 'var(--bg-secondary)',
                 padding: '48px',
@@ -142,6 +244,20 @@ export default function LoginPage() {
                                     e.target.style.boxShadow = 'none';
                                 }}
                             />
+                            {error && (
+                                <div style={{
+                                    color: 'var(--error)',
+                                    marginBottom: '16px',
+                                    fontSize: '14px',
+                                    padding: '8px 12px',
+                                    background: 'rgba(239, 68, 68, 0.1)',
+                                    borderRadius: '8px',
+                                    textAlign: 'left',
+                                    border: '1px solid rgba(239, 68, 68, 0.2)'
+                                }}>
+                                    ⚠️ {error}
+                                </div>
+                            )}
                             <input
                                 type="password"
                                 placeholder="Password"
@@ -197,23 +313,47 @@ export default function LoginPage() {
                         </button>
 
                         <div style={{ marginTop: '28px' }}>
-                            <button
-                                type="button"
-                                onClick={() => setIsSignUp(!isSignUp)}
-                                style={{
-                                    background: 'none',
-                                    border: 'none',
-                                    color: 'var(--accent-primary)',
-                                    cursor: 'pointer',
-                                    fontSize: '15px',
-                                    fontWeight: 600,
-                                    transition: 'opacity 0.2s ease'
-                                }}
-                                onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
-                                onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-                            >
-                                {isSignUp ? 'Already have an account? Sign in' : 'Don\'t have an account? Sign up'}
-                            </button>
+                            <div style={{ marginBottom: '16px' }}>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setIsSignUp(!isSignUp);
+                                        setError(null);
+                                    }}
+                                    style={{
+                                        background: 'none',
+                                        border: 'none',
+                                        color: 'var(--text-secondary)',
+                                        cursor: 'pointer',
+                                        fontSize: '14px',
+                                        fontWeight: 500,
+                                        transition: 'color 0.2s ease'
+                                    }}
+                                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
+                                    onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
+                                >
+                                    {isSignUp ? 'Already have an account? Sign in' : 'Don\'t have an account? Sign up'}
+                                </button>
+                            </div>
+
+                            {!isSignUp && (
+                                <div>
+                                    <a
+                                        href="/reset-password"
+                                        style={{
+                                            color: 'var(--text-secondary)',
+                                            textDecoration: 'none',
+                                            fontSize: '14px',
+                                            fontWeight: 500,
+                                            transition: 'color 0.2s ease'
+                                        }}
+                                        onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
+                                        onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
+                                    >
+                                        Forgot your password?
+                                    </a>
+                                </div>
+                            )}
                         </div>
                     </form>
                 ) : (

@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/utils/supabaseClient';
-import LoginPage from '@/components/LoginPage';
+import { useRouter } from 'next/navigation';
 
 const MapChart = dynamic(() => import('@/components/MapChart'), { ssr: false });
 
@@ -60,6 +60,7 @@ const GlobeIcon = () => (
 );
 
 export default function Home() {
+  const router = useRouter();
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
@@ -76,8 +77,13 @@ export default function Home() {
     // Check initial session
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      setUserId(session?.user.id ?? null);
-      setLoading(false);
+      if (!session) {
+        // Redirect to login if no session
+        router.push('/login');
+      } else {
+        setUserId(session.user.id);
+        setLoading(false);
+      }
     };
 
     checkSession();
@@ -85,8 +91,13 @@ export default function Home() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUserId(session?.user.id ?? null);
-      setLoading(false);
+      if (!session) {
+        router.push('/login');
+        setUserId(null);
+      } else {
+        setUserId(session.user.id);
+        setLoading(false);
+      }
     });
 
     // Check system preference for dark mode
@@ -132,7 +143,7 @@ export default function Home() {
   }
 
   if (!userId) {
-    return <LoginPage />;
+    return null; // Don't render anything while redirecting
   }
 
   const percentage = Math.round((visitedCount / totalCountries) * 100);
@@ -211,7 +222,7 @@ export default function Home() {
               color: 'var(--text-secondary)',
               lineHeight: '1.6'
             }}>
-              Click on any country on the map to mark it as visited.
+              Click on any country on the map or search for it to mark it as visited.
               Your selections are saved automatically and you can access them
               from any device.
             </div>
