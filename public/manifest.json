@@ -1,0 +1,10 @@
+{
+    "name": "Travel Tracker",
+    "short_name": "Travel Tracker",
+    "description": "Track the countries you've visited around the world",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#0a0a0a",
+    "theme_color": "#4f46e5",
+    "orientation": "portrait-primary"
+}
