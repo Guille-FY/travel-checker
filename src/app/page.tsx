@@ -71,6 +71,7 @@ export default function Home() {
   useEffect(() => {
     // Check if desktop and expand sidebar
     if (typeof window !== 'undefined' && window.innerWidth > 768) {
+      // eslint-disable-next-line
       setSidebarCollapsed(false);
     }
 
