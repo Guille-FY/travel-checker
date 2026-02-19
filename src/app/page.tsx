@@ -119,7 +119,7 @@ export default function Home() {
       subscription.unsubscribe();
       prefersDark.removeEventListener('change', handleThemeChange);
     };
-  }, []);
+  }, [router]);
 
   const toggleDarkMode = () => {
     const newDarkMode = !darkMode;
@@ -283,7 +283,6 @@ export default function Home() {
         {/* Map Component */}
         <MapChart
           userId={userId}
-          darkMode={darkMode}
           onVisitedCountChange={handleVisitedCountUpdate}
         />
       </div>

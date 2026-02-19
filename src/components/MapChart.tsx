@@ -10,7 +10,6 @@ const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json";
 
 interface MapChartProps {
     userId?: string;
-    darkMode?: boolean;
     onVisitedCountChange?: (count: number) => void;
 }
 
@@ -35,7 +34,7 @@ const SearchIcon = () => (
     </svg>
 );
 
-export default function MapChart({ userId, darkMode = false, onVisitedCountChange }: MapChartProps) {
+export default function MapChart({ userId, onVisitedCountChange }: MapChartProps) {
     const [visited, setVisited] = useState<string[]>([]);
     const [loading, setLoading] = useState(false);
     const [hoveredCountry, setHoveredCountry] = useState<string | null>(null);
